@@ -1,26 +1,385 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Fonts — self-hosted. Estedad is the Persian face; Geist Sans and Geist Mono
+   are the Latin pair, matching the reference's typography. Google Fonts is not
+   reachable from this environment, so `next/font/google` is not used. */
+@import "@fontsource-variable/estedad/index.css";
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Theme
+
+   Two palettes meet here. The neutrals come from ratatui.rs (Astro Starlight
+   dark): #17181c page, #23262f / #353841 surfaces, and a vivid blue accent at
+   #3369ff. The Vengeance UI tokens (`--vng-*`) are kept alongside it so its
+   registry components inherit the same surface rather than fighting it.
+   ══════════════════════════════════════════════════════════════════════════ */
+@theme {
+  --color-background: #08080a;
+  --color-foreground: #fafafa;
+  --color-card: #131316;
+  --color-card-foreground: #fafafa;
+  --color-popover: #131316;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #fafafa;
+  --color-primary-foreground: #08080a;
+  --color-secondary: #1c1c1f;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #131316;
+  --color-muted-foreground: #8e8e96;
+  --color-accent: #1c1c1f;
+  --color-accent-foreground: #fafafa;
+  --color-border: #212124;
+  --color-ring: #52525b;
+
+  /* Brand accent — the animated arcs, links, and focus states. */
+  --color-accent-hue: #5b8cff;
+  --color-accent-hue-soft: #8fb0ff;
+  --color-accent-hue-dim: #1e2a4d;
+
+  /* Vengeance UI theme tokens (registry:theme). */
+  --color-vng-primary: var(--vng-primary);
+  --color-vng-secondary: var(--vng-secondary);
+  --color-vng-danger: var(--vng-danger);
+  --color-vng-success: var(--vng-success);
+  --color-vng-warning: var(--vng-warning);
+  --radius-sm: var(--vng-radius-sm);
+  --radius-md: var(--vng-radius-md);
+  --radius-lg: var(--vng-radius-lg);
+
+  --font-sans: "Estedad Variable", "Geist Variable", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-display: "Geist Variable", "Estedad Variable", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", "Estedad Variable", ui-monospace,
+    monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --radius-card: 0.75rem;
+
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-marquee-rtl: marquee-rtl 32s linear infinite;
+
+  /* Vengeance UI's AnimatedRays ships `animate-aurora-bg`. In Tailwind v4 a
+     bare @keyframes defines no utility — the name only becomes a class once
+     it is registered here as `--animate-*`. */
+  --animate-aurora-bg: aurora-bg 22s ease-in-out infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Vengeance UI's dark block, re-pointed at the ratatui.rs surfaces. */
+.dark {
+  --vng-background: #08080a;
+  --vng-foreground: #fafafa;
+  --vng-border: #212124;
+  --vng-primary: #fafafa;
+  --vng-primary-hover: #e4e4e7;
+  --vng-primary-foreground: #08080a;
+  --vng-secondary: #1c1c1f;
+  --vng-secondary-foreground: #fafafa;
+  --vng-danger: #dc2626;
+  --vng-success: #16a34a;
+  --vng-warning: #eab308;
+  --vng-radius-sm: 4px;
+  --vng-radius-md: 6px;
+  --vng-radius-lg: 8px;
+  --vng-space-xs: 0.5rem;
+  --vng-space-sm: 0.75rem;
+  --vng-space-md: 1rem;
+  --vng-space-lg: 2rem;
+  --vng-transition-speed: 150ms;
+  --vng-transition-speed-slow: calc(var(--vng-transition-speed) * 2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes marquee-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(50%);
+  }
+}
+
+/* Registered above as --animate-aurora-bg; drives the page backdrop's rays. */
+@keyframes aurora-bg {
+  0% {
+    background-position: 0% 50%, 200% 50%;
+  }
+  100% {
+    background-position: 200% 50%, -100% 50%;
+  }
+}
+
+:root {
+  --header-height: 64px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-height) + 1rem);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Latin fragments inside Persian prose keep their own direction. */
+  bdi {
+    unicode-bidi: isolate;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-hue);
+    color: #08080a;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 1rem;
+    top: -100%;
+    z-index: 100;
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: top 0.2s var(--ease-out-expo);
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* Spinner glyphs are never mirrored — the arc must turn the way the library
+     turns it — so every spinner is forced LTR. */
+  .spin {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-variant-emoji: text;
+    line-height: 1;
+  }
+
+  /* A braille dot is a fraction of the em box. Measured against the real
+     frames: below ~18px the dots of ⢀/⡎ merge into a solid block and the
+     shape is unreadable. `spin-lg` is the size at which each dot separates —
+     anything quoting a frame uses it rather than trusting `text-sm`. */
+  .spin-lg {
+    font-size: 1.375rem;
+    font-weight: 550;
+    line-height: 1.12;
+    letter-spacing: 0.02em;
+  }
+
+  /* Multi-row frames are read as ASCII art, not as body text: the shape is
+     the point, so it gets an artboard's worth of room and a little more
+     letter-spacing to keep the terminal-cell grid honest. */
+  .spin-ascii {
+    font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+    font-weight: 550;
+    line-height: 1.18;
+    letter-spacing: 0.06em;
+  }
+
+  /* Single-row frames — bars, waves, sliding windows — are read as a written
+     line. Bigger than body text, but not so big that a 22-cell bar overflows
+     its card on a phone. */
+  .spin-line {
+    font-size: clamp(0.95rem, 2vw, 1.125rem);
+    font-weight: 550;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+  }
+
+  /* Code surfaces share the mono face and LTR flow but keep normal leading. */
+  .code-ltr {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: left;
+  }
+
+  /* The lit arc takes the brand accent; the resting ring stays a quiet step
+     above the background so the shape reads without competing with the arc.
+     0.32 was too faint once the glyphs shrank — the resting cells have to
+     survive the same sub-pixel thinning as the lit ones. */
+  .spin-arc {
+    color: var(--color-accent-hue);
+  }
+  .spin-dim {
+    color: var(--color-muted-foreground);
+    opacity: 0.55;
+  }
+
+  /* Syntax highlighting. The hues are held at similar lightness so no one
+     token shouts over another, and the comment tone matches `--muted-foreground`
+     rather than going greener, which would pull in a second accent. */
+  .tok-keyword {
+    color: #c792ea;
+  }
+  .tok-type {
+    color: #82aaff;
+  }
+  .tok-fn {
+    color: #82aaff;
+  }
+  .tok-string {
+    color: #c3e88d;
+  }
+  .tok-number {
+    color: #f78c6c;
+  }
+  .tok-comment {
+    color: var(--color-muted-foreground);
+    font-style: italic;
+  }
+  .tok-punct {
+    color: #6f6f7a;
+  }
+  .tok-attr {
+    color: #ffcb6b;
+  }
+  .tok-text {
+    color: var(--color-foreground);
+  }
+
+  /* Gutter of a line-numbered code block. */
+  .code-gutter {
+    color: #4a4a54;
+    user-select: none;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5vw, 2.5rem);
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--color-muted-foreground);
+    margin: 0 0 1rem;
+  }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+  .section-label-num {
+    color: var(--color-foreground);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .section-intro {
+    max-width: 40rem;
+    margin: 1rem 0 0;
+    color: var(--color-muted-foreground);
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  /* The reference's signature surface: a quiet bordered panel. */
+  .panel {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  /* A lifted band. Alternating this with the flat page colour gives a long
+     page a rhythm; the hairlines on both edges keep the change of level
+     legible instead of the sections bleeding into one another. */
+  .section-raised {
+    background:
+      radial-gradient(
+        120% 80% at 50% 0%,
+        color-mix(in oklab, var(--color-accent-hue) 7%, transparent) 0%,
+        transparent 60%
+      ),
+      linear-gradient(
+        to bottom,
+        var(--color-card) 0%,
+        color-mix(in oklab, var(--color-card) 55%, var(--color-background)) 100%
+      );
+    box-shadow: inset 0 1px 0 var(--color-border),
+      inset 0 -1px 0 var(--color-border);
+  }
+}
+
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.6s var(--ease-out-expo),
+      transform 0.6s var(--ease-out-expo);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
 }
